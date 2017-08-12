@@ -1,11 +1,14 @@
 package com.forsakendragon.android.bartalarm;
 
 import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.AppCompatSpinner;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.Toast;
@@ -22,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class ChooseRouteActivity extends AppCompatActivity {
+public class ChooseRouteFragment extends Fragment {
     private static final String TAG = "BART_ALARM";
 
     private AppCompatSpinner mFromStationSpinner;
@@ -30,19 +33,23 @@ public class ChooseRouteActivity extends AppCompatActivity {
     private Button mChooseRoute;
     private Button mCancelAlarm;
     private Button mTestXMLDownload;
-
     private SimpleAlarm mAlarm = new SimpleAlarm();
 
     private ArrayList<ArrayList<Integer>> mTimes;
     private List<parseBARTStations.Station> mStationList;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_choose_route);
-        Log.d(TAG, "ChooseRouteActivity.onCreate() being executed");
+        Log.d(TAG, "ChooseRouteFragment.onCreate() being executed");
+    }
 
-        mFromStationSpinner = (AppCompatSpinner) findViewById(R.id.fromStation);
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_choose_route, container, false);
+
+        mFromStationSpinner = (AppCompatSpinner) v.findViewById(R.id.fromStation);
         mFromStationSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -55,7 +62,7 @@ public class ChooseRouteActivity extends AppCompatActivity {
             }
         });
 
-        mToStationSpinner = (AppCompatSpinner) findViewById(R.id.toStation);
+        mToStationSpinner = (AppCompatSpinner) v.findViewById(R.id.toStation);
         mToStationSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -68,21 +75,21 @@ public class ChooseRouteActivity extends AppCompatActivity {
             }
         });
 
-        mChooseRoute = (Button) findViewById(R.id.chooseRouteButton);
+        mChooseRoute = (Button) v.findViewById(R.id.chooseRouteButton);
         mChooseRoute.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 int timeToAlarm = mTimes.get(mFromStationSpinner.getSelectedItemPosition()).get(mToStationSpinner.getSelectedItemPosition());
-                Toast.makeText(ChooseRouteActivity.this,
-                               mFromStationSpinner.getSelectedItem().toString() + " to " +
-                               mToStationSpinner.getSelectedItem().toString() + " will take " + timeToAlarm,
-                               Toast.LENGTH_SHORT).show();
-                mAlarm.setAlarm(ChooseRouteActivity.this, timeToAlarm);
+                Toast.makeText(v.getContext(),
+                        mFromStationSpinner.getSelectedItem().toString() + " to " +
+                                mToStationSpinner.getSelectedItem().toString() + " will take " + timeToAlarm,
+                        Toast.LENGTH_SHORT).show();
+                mAlarm.setAlarm(v.getContext(), timeToAlarm);
 
             }
         });
 
-        mCancelAlarm = (Button) findViewById(R.id.cancelAlarm);
+        mCancelAlarm = (Button) v.findViewById(R.id.cancelAlarm);
         mCancelAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -90,18 +97,22 @@ public class ChooseRouteActivity extends AppCompatActivity {
             }
         });
 
-        mTestXMLDownload = (Button) findViewById(R.id.testXMLDownload);
+        mTestXMLDownload = (Button) v.findViewById(R.id.testXMLDownload);
         mTestXMLDownload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.d(TAG, "Before execute List: " + mStationList);
 
-                downloadStationXMLFile down = new downloadStationXMLFile();
+                ChooseRouteFragment.downloadStationXMLFile down = new ChooseRouteFragment.downloadStationXMLFile();
                 down.execute();
             }
         });
 
         setMatrix();
+
+        return v;
+
+
     }
 
     private void setMatrix() {
@@ -165,4 +176,6 @@ public class ChooseRouteActivity extends AppCompatActivity {
             }
         }
     }
+
+
 }
