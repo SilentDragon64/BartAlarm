@@ -48,4 +48,11 @@
         android:layout_gravity="center_horizontal"
         android:text="Cancel Alarm"/>
 
+    <Button
+        android:id="@+id/testXMLDownload"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="Download XML"/>
+
 </LinearLayout>
