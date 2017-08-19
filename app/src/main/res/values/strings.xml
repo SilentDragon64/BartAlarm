@@ -1,11 +1,16 @@
 <resources>
+    <string name="splash_download_stations">Downloading Station List</string>
+    <string name="splash_parsing_stations">Parsing Station List</string>
+    <string name="splash_done">Download and parse completed</string>
+    <string name="splash_done_local">Not Connected, using local Station List</string>
+
     <string name="app_name">BartAlarm</string>
     <string name="from_station">From Station:</string>
     <string name="to_station">To Station:</string>
     <string name="choose_route_button_text">Choose Route</string>
 
     <string-array name="bart_stations">
-        <item>"12th St. Oakland City Center"</item>
+        <!--<item>"12th St. Oakland City Center"</item>-->
         <item>"16th St. Mission (SF)"</item>
         <item>"19th St. Oakland"</item>
         <item>"24th St. Mission (SF)"</item>

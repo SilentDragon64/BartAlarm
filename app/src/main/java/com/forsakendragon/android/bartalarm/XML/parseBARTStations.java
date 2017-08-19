@@ -1,6 +1,9 @@
 package com.forsakendragon.android.bartalarm.XML;
 
+import android.util.Log;
 import android.util.Xml;
+
+import com.forsakendragon.android.bartalarm.Config;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -15,15 +18,7 @@ import java.util.List;
  */
 
 public class parseBARTStations {
-    private static final String entryRoot = "root";
-    private static final String entryStations = "stations";
-    private static final String entryStation = "station";
-    private static final String entryName = "name";
-    private static final String entryAbbreviation = "abbr";
-    private static final String entryLatitude = "gtfs_latitude";
-    private static final String entryLongitude = "gtfs_longitude";
-
-    private static final String ns = null;
+    private static final String nameSpace = null;
 
     // This class represents a single entry (post) in the XML feed.
     // It includes the data members: name, abbr, GPS Lat and Long
@@ -33,32 +28,42 @@ public class parseBARTStations {
         public final double latitude;
         public final double longitude;
 
-        private Station(String name, String abbreviation, double latitude, double longitude) {
+        // TODO: Change back to private after testing splash
+        public Station(String name, String abbreviation, double latitude, double longitude) {
             this.name = name;
             this.abbreviation = abbreviation;
             this.latitude = latitude;
             this.longitude = longitude;
         }
-    }
 
-    public List<Station> parse(InputStream in) throws XmlPullParserException, IOException {
-
-        try {
-            XmlPullParser parser = Xml.newPullParser();
-            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            parser.setInput(in, null);
-            parser.nextTag();
-            return readFeed(parser);
-        } finally {
-            in.close();
+        // Needed for AppCompatSpinner Arraylist to display station names
+        @Override
+        public String toString() {
+            return name;
         }
     }
 
-    private List<Station> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
-        List<Station> entries = null;
+    // TODO: Testing Method
+    public static void printStationList(ArrayList<Station> list) {
+        Log.d(Config.LOG_TAG, "Station List: ");
+        for (Station s: list) {
+            Log.d(Config.LOG_TAG, s.name + " " + s.abbreviation + " " + s.latitude + " " + s.latitude);
+        }
+    }
+
+    public ArrayList<Station> parse(InputStream in) throws XmlPullParserException, IOException {
+        XmlPullParser parser = Xml.newPullParser();
+        parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+        parser.setInput(in, null);
+        parser.nextTag();
+        return readFeed(parser);
+    }
+
+    private ArrayList<Station> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
+        ArrayList<Station> entries = null;
 
         //Tests for first node being root, if not throws error
-        parser.require(XmlPullParser.START_TAG, ns, entryRoot);
+        parser.require(XmlPullParser.START_TAG, nameSpace, Config.XML_ENTRY_ROOT);
 
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -66,7 +71,7 @@ public class parseBARTStations {
             }
             String name = parser.getName();
             // Starts by looking for the entry tag
-            if (name.equals(entryStations)) {
+            if (name.equals(Config.XML_ENTRY_STATIONS)) {
                 entries = readStations(parser);
             } else {
                 parseXML.skip(parser);
@@ -76,11 +81,11 @@ public class parseBARTStations {
     }
 
 
-    private List<Station> readStations(XmlPullParser parser) throws XmlPullParserException, IOException {
-        List<Station> entries = new ArrayList<>();
+    private ArrayList<Station> readStations(XmlPullParser parser) throws XmlPullParserException, IOException {
+        ArrayList<Station> entries = new ArrayList<>();
 
         //Tests for first node being the collection of stations, if not throws error
-        parser.require(XmlPullParser.START_TAG, ns, entryStations);
+        parser.require(XmlPullParser.START_TAG, nameSpace, Config.XML_ENTRY_STATIONS);
 
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -88,7 +93,7 @@ public class parseBARTStations {
             }
             String name = parser.getName();
             // Starts by looking for the entry tag
-            if (name.equals(entryStation)) {
+            if (name.equals(Config.XML_ENTRY_STATION)) {
                 entries.add(readStationEntry(parser));
             } else {
                 parseXML.skip(parser);
@@ -101,7 +106,7 @@ public class parseBARTStations {
     // longitude tag, it hands it off to the readString method for processing. Otherwise, it skips
     // the tag.
     private Station readStationEntry(XmlPullParser parser) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, entryStation);
+        parser.require(XmlPullParser.START_TAG, nameSpace, Config.XML_ENTRY_STATION);
         String name = null;
         String abbreviation = null;
         String latitude = null;
@@ -112,14 +117,14 @@ public class parseBARTStations {
                 continue;
             }
             String entry = parser.getName();
-            if (entry.equals(entryName)) {
-                name = readString(parser, entryName);
-            } else if (entry.equals(entryAbbreviation)) {
-                abbreviation = readString(parser, entryAbbreviation);
-            } else if (entry.equals(entryLatitude)) {
-                latitude = readString(parser, entryLatitude);
-            } else if (entry.equals(entryLongitude)) {
-                longitude = readString(parser, entryLongitude);
+            if (entry.equals(Config.XML_ENTRY_NAME)) {
+                name = readString(parser, Config.XML_ENTRY_NAME);
+            } else if (entry.equals(Config.XML_ENTRY_ABBREVIATION)) {
+                abbreviation = readString(parser, Config.XML_ENTRY_ABBREVIATION);
+            } else if (entry.equals(Config.XML_ENTRY_LATITUDE)) {
+                latitude = readString(parser, Config.XML_ENTRY_LATITUDE);
+            } else if (entry.equals(Config.XML_ENTRY_LONGITUDE)) {
+                longitude = readString(parser, Config.XML_ENTRY_LONGITUDE);
             } else {
                 parseXML.skip(parser);
             }
@@ -129,16 +134,16 @@ public class parseBARTStations {
 
     // Processes Strings entries in the feed with the value title.
     private String readString(XmlPullParser parser, String title) throws IOException, XmlPullParserException {
-        parser.require(XmlPullParser.START_TAG, ns, title);
+        parser.require(XmlPullParser.START_TAG, nameSpace, title);
         String entry = parseXML.readText(parser);
-        parser.require(XmlPullParser.END_TAG, ns, title);
+        parser.require(XmlPullParser.END_TAG, nameSpace, title);
         return entry;
     }
 
     // Processes compound link tags in the feed.
 //    private String readLink(XmlPullParser parser) throws IOException, XmlPullParserException {
 //        String link = "";
-//        parser.require(XmlPullParser.START_TAG, ns, "link");
+//        parser.require(XmlPullParser.START_TAG, nameSpace, "link");
 //        String tag = parser.getName();
 //        String relType = parser.getAttributeValue(null, "rel");
 //        if (tag.equals("link")) {
@@ -147,7 +152,7 @@ public class parseBARTStations {
 //                parser.nextTag();
 //            }
 //        }
-//        parser.require(XmlPullParser.END_TAG, ns, "link");
+//        parser.require(XmlPullParser.END_TAG, nameSpace, "link");
 //        return link;
 //    }
 }

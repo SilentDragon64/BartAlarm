@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -26,8 +27,6 @@ import java.util.List;
 
 
 public class ChooseRouteFragment extends Fragment {
-    private static final String TAG = "BART_ALARM";
-
     private AppCompatSpinner mFromStationSpinner;
     private AppCompatSpinner mToStationSpinner;
     private Button mChooseRoute;
@@ -36,12 +35,12 @@ public class ChooseRouteFragment extends Fragment {
     private SimpleAlarm mAlarm = new SimpleAlarm();
 
     private ArrayList<ArrayList<Integer>> mTimes;
-    private List<parseBARTStations.Station> mStationList;
+    private ArrayList<parseBARTStations.Station> mStationList;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "ChooseRouteFragment.onCreate() being executed");
+        Log.d(Config.LOG_TAG, "ChooseRouteFragment.onCreate() being executed");
     }
 
     @Nullable
@@ -49,29 +48,49 @@ public class ChooseRouteFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_choose_route, container, false);
 
+        Bundle args = getArguments();
+        if (args != null) {
+            Log.d(Config.LOG_TAG, "ChooseRouteFragment.onCreateView recieved stations:");
+            mStationList = (ArrayList<parseBARTStations.Station>) args.getSerializable(Config.ARGS_STATION_LIST);
+            parseBARTStations.printStationList(mStationList);
+        }
+
+        // Save code to set from local array, but if no internet, local station list passed as argument
+//        // Create an ArrayAdapter using the string array and a default spinner layout
+//        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(v.getContext(), R.array.bart_stations, android.R.layout.simple_spinner_item);
+//        // Specify the layout to use when the list of choices appears
+//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        // Apply the adapter to the spinner
+//        mFromStationSpinner.setAdapter(adapter);
+
+        ArrayAdapter<parseBARTStations.Station> arrayAdapter = new ArrayAdapter<>(v.getContext(), android.R.layout.simple_spinner_item, mStationList);
+        arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
         mFromStationSpinner = (AppCompatSpinner) v.findViewById(R.id.fromStation);
+        mFromStationSpinner.setAdapter(arrayAdapter);
         mFromStationSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Log.d(TAG, parent.getItemAtPosition(position).toString() + " selected as From station, Position: " + position);
+                Log.d(Config.LOG_TAG, parent.getItemAtPosition(position).toString() + " selected as From station, Position: " + position);
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                Log.d(TAG, "None selected for From station");
+                Log.d(Config.LOG_TAG, "None selected for From station");
             }
         });
 
         mToStationSpinner = (AppCompatSpinner) v.findViewById(R.id.toStation);
+        mToStationSpinner.setAdapter(arrayAdapter);
         mToStationSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Log.d(TAG, parent.getItemAtPosition(position).toString() + " selected as To station, Position: " + position);
+                Log.d(Config.LOG_TAG, parent.getItemAtPosition(position).toString() + " selected as To station, Position: " + position);
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                Log.d(TAG, "None selected for To station");
+                Log.d(Config.LOG_TAG, "None selected for To station");
             }
         });
 
@@ -101,18 +120,25 @@ public class ChooseRouteFragment extends Fragment {
         mTestXMLDownload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "Before execute List: " + mStationList);
+                Log.d(Config.LOG_TAG, "Do nothing");
 
-                ChooseRouteFragment.downloadStationXMLFile down = new ChooseRouteFragment.downloadStationXMLFile();
-                down.execute();
+
             }
         });
 
         setMatrix();
 
         return v;
+    }
 
+    @Override
+    public void onStart() {
+        super.onStart();
 
+        // During startup, check if there are arguments passed to the fragment.
+        // onStart is a good place to do this because the layout has already been
+        // applied to the fragment at this point so we can safely call the method
+        // below that sets the article text.
     }
 
     private void setMatrix() {
@@ -129,53 +155,7 @@ public class ChooseRouteFragment extends Fragment {
             mTimes.add(row);
         }
 
-        Log.d(TAG, mTimes.toString());
+        //Log.d(Config.LOG_TAG, mTimes.toString());
     }
-
-    //Page 494 return types, 496 for progress updates
-    public class downloadStationXMLFile extends AsyncTask<Void, Void, List<parseBARTStations.Station>> {
-        private static final String mURL = "http://api.bart.gov/api/stn.aspx?cmd=stns&key=MW9S-E7SL-26DU-VV8V";
-        @Override
-        protected List<parseBARTStations.Station> doInBackground(Void... params) {
-            try {
-                return downloadAndParse();
-            } catch (XmlPullParserException e) {
-                Log.e(TAG, "Failed to parse: " + e);
-                e.printStackTrace();
-            } catch (IOException e) {
-                Log.e(TAG, "Failed to fetch URL: " + e);
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(List<parseBARTStations.Station> list) {
-            //Runs in main thread, not async, update UI
-            mStationList = list;
-            //Log.d(TAG, "After execute List: " + mStationList);
-            for (parseBARTStations.Station s: mStationList) {
-                Log.d(TAG, "After execute, Stations: " + s.name);
-            }
-        }
-
-        public List<parseBARTStations.Station> downloadAndParse() throws IOException, XmlPullParserException {
-            URL url = new URL(mURL);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-            try {
-                InputStream in = connection.getInputStream();
-
-                if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                    throw new IOException(connection.getResponseMessage() + ": with " + mURL);
-                }
-                parseBARTStations parseBART = new parseBARTStations();
-                return parseBART.parse(in);
-            } finally {
-                connection.disconnect();
-            }
-        }
-    }
-
 
 }

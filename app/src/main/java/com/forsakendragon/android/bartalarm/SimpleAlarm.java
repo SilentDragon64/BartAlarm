@@ -15,7 +15,6 @@ import android.widget.Toast;
  */
 
 public class SimpleAlarm extends WakefulBroadcastReceiver {
-    private static final String TAG = "BART_ALARM";
     private static final String EXTRA_ALARM_MINUTES = "EXTRA_ALARM_MINUTES";
     private static final String EXTRA_ALARM_TYPE = "EXTRA_ALARM_TYPE";
     // The app's AlarmManager, which provides access to the system alarm services.
@@ -29,12 +28,12 @@ public class SimpleAlarm extends WakefulBroadcastReceiver {
         int minutesToAlarmIn = extras.getInt(EXTRA_ALARM_MINUTES);
         String alarmType = extras.getString(EXTRA_ALARM_TYPE);
 
-        Log.d(TAG, "Alarming after " + minutesToAlarmIn + " minutes");
+        Log.d(Config.LOG_TAG, "Alarming after " + minutesToAlarmIn + " minutes");
         Toast.makeText(context, "Alarm!", Toast.LENGTH_SHORT).show();
     }
 
     public void setAlarm(Context context, int minutesToAlarmIn) {
-        Log.d(TAG, "Alarm in " + minutesToAlarmIn + " minutes");
+        Log.d(Config.LOG_TAG, "Alarm in " + minutesToAlarmIn + " minutes");
 
         mAlarmMgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, SimpleAlarm.class);
@@ -54,10 +53,10 @@ public class SimpleAlarm extends WakefulBroadcastReceiver {
     }
 
     public void cancelAlarm() {
-        Log.d(TAG, "Cancelling Alarm");
+        Log.d(Config.LOG_TAG, "Cancelling Alarm");
         if (mAlarmMgr!= null) {
             mAlarmMgr.cancel(mAlarmIntent);
-            Log.d(TAG, "Alarm Cancelled");
+            Log.d(Config.LOG_TAG, "Alarm Cancelled");
         }
 
     }

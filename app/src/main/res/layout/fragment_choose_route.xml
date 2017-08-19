@@ -18,8 +18,8 @@
         android:id="@+id/fromStation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:entries="@array/bart_stations"
         android:layout_margin="10dp"/>
+    <!--android:entries="@array/bart_stations"-->
 
     <TextView
         android:layout_width="wrap_content"
