@@ -37,7 +37,7 @@ public class BartAlarmActivity extends AppCompatActivity implements SplashFragme
     }
 
     @Override
-    public void onFragmentInteraction(ArrayList<parseBARTStations.Station> list) {
+    public void onFragmentInteraction(ArrayList<parseBARTStations.Station> list, boolean inConnected) {
         Log.d(Config.LOG_TAG, "BartAlarmActivity.onFragmentInteraction Station List handed back:");
         parseBARTStations.printStationList(list);
 
@@ -45,8 +45,8 @@ public class BartAlarmActivity extends AppCompatActivity implements SplashFragme
         Fragment newFragment = new ChooseRouteFragment();
         Bundle bundle = new Bundle();
         bundle.putSerializable(Config.ARGS_STATION_LIST, list);
+        bundle.putBoolean(Config.ARGS_IS_CONNECTED, inConnected);
         newFragment.setArguments(bundle);
-
 
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction transaction = fm.beginTransaction();

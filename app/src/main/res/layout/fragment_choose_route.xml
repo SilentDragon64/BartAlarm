@@ -31,8 +31,8 @@
         android:id="@+id/toStation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:entries="@array/bart_stations"
         android:layout_margin="10dp"/>
+    <!--android:entries="@array/bart_stations"-->
 
     <Button
         android:id="@+id/chooseRouteButton"
@@ -49,10 +49,21 @@
         android:text="Cancel Alarm"/>
 
     <Button
-        android:id="@+id/testXMLDownload"
+        android:id="@+id/downloadSchedualXML"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:text="Download XML"/>
+
+    <CheckedTextView
+        android:id="@+id/tripList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checkMark="@android:drawable/checkbox_on_background"
+        android:checked="false"
+        android:clickable="true"
+        android:contextClickable="true"
+        android:gravity="center"
+        />
 
 </LinearLayout>

@@ -1,5 +1,6 @@
 package com.forsakendragon.android.bartalarm;
 
+import com.forsakendragon.android.bartalarm.XML.downloadXML;
 import com.forsakendragon.android.bartalarm.XML.parseBARTStations;
 
 import android.content.Context;
@@ -21,7 +22,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -47,14 +47,35 @@ public class SplashFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_splash, container, false);
+        boolean isConnected;
 
         mStationList = new ArrayList<>();
 
         mSplashStatus = (TextView) v.findViewById(R.id.splash_status);
         mSplashStatus.setText(R.string.splash_download_stations);
 
-        mDownloadStationXMLFile = new downloadStationXMLFile();
-        mDownloadStationXMLFile.execute();
+
+        isConnected = testIsConnected();
+        if (isConnected) {
+            mDownloadStationXMLFile = new downloadStationXMLFile(Config.STATION_LIST_COMMAND);
+            mDownloadStationXMLFile.execute();
+        } else {
+            // TODO; Set station list locally
+            mStationList.add(new parseBARTStations.Station("name", "abbr", 1.0, 1.0));
+            mSplashStatus.setText(R.string.splash_done_local);
+            mListener.onFragmentInteraction(mStationList, isConnected);
+
+//            private ArrayList<parseBARTStations.Station> generateLocalStationList() {
+//                ArrayList<parseBARTStations.Station> stations = new ArrayList<>();
+//
+//                for (String s: getResources().getStringArray(R.array.bart_stations)) {
+//                    stations.add(new parseBARTStations.Station(s, "", 0.0, 0.0));
+//                }
+//
+//                return stations;
+//            }
+
+        }
 
 //        mSplashStatus.setOnClickListener(new View.OnClickListener() {
 //
@@ -85,6 +106,12 @@ public class SplashFragment extends Fragment {
         mListener = null;
     }
 
+    private boolean testIsConnected() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        return networkInfo != null && networkInfo.isConnected();
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -96,98 +123,30 @@ public class SplashFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        void onFragmentInteraction(ArrayList<parseBARTStations.Station> list);
+        void onFragmentInteraction(ArrayList<parseBARTStations.Station> list, boolean isConnected);
     }
 
-
-    //Page 494 return types, 496 for progress updates
-    public class downloadStationXMLFile extends AsyncTask<Void, Void, ArrayList<parseBARTStations.Station>> {
-        private static final String mURL = "http://api.bart.gov/api/stn.aspx?cmd=stns&key=MW9S-E7SL-26DU-VV8V";
-        private boolean isConnected = false;
-        @Override
-        protected ArrayList<parseBARTStations.Station> doInBackground(Void... params) {
-            try {
-                if (isConnected = testIsConnected())
-                    return downloadAndParse();
-                else
-                    return generateLocalStationList();
-            } catch (XmlPullParserException e) {
-                Log.e(Config.LOG_TAG, "Failed to parse: " + e);
-                e.printStackTrace();
-            } catch (IOException e) {
-                Log.e(Config.LOG_TAG, "Failed to fetch URL: " + e);
-                e.printStackTrace();
-            }
-            return null;
+    public class downloadStationXMLFile extends downloadXML<parseBARTStations.Station> {
+        public downloadStationXMLFile(String url) {
+            super(url);
         }
 
         @Override
-        protected void onPostExecute(ArrayList<parseBARTStations.Station> list) {
-            //Runs in main thread, not async, update UI
-            if(isConnected)
-                mSplashStatus.setText(R.string.splash_done);
-            else
-                mSplashStatus.setText(R.string.splash_done_local);
+        protected ArrayList<parseBARTStations.Station> parse(InputStream in) throws IOException, XmlPullParserException{
+            parseBARTStations parseBART = new parseBARTStations();
+            return parseBART.parse(in);
+        }
+
+        @Override
+        protected void post(ArrayList<parseBARTStations.Station> list) {
+            mSplashStatus.setText(R.string.splash_done);
 
             mStationList = list;
-            Log.d(Config.LOG_TAG, "SplashFragment.onPostExecute Station List: ");
+            Log.d(Config.LOG_TAG, "downloadStationXMLFile.post Station List: ");
             parseBARTStations.printStationList(mStationList);
 
-
-            mListener.onFragmentInteraction(mStationList);
+            mListener.onFragmentInteraction(mStationList, true);
         }
 
-        private ArrayList<parseBARTStations.Station> downloadAndParse() throws IOException, XmlPullParserException {
-            URL url = new URL(mURL);
-            HttpURLConnection connection = null;
-            InputStream in = null;
-
-            try {
-                connection = (HttpURLConnection) url.openConnection();
-                // Timeout for reading InputStream arbitrarily set to 3000ms.
-                connection.setReadTimeout(3000);
-                // Timeout for connection.connect() arbitrarily set to 3000ms.
-                connection.setConnectTimeout(3000);
-
-                // Open communications link (network traffic occurs here).
-                connection.connect();
-                // TODO: Callback method
-                //publishProgress(DownloadCallback.Progress.CONNECT_SUCCESS);
-
-                if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                    throw new IOException(connection.getResponseMessage() + ": with " + mURL);
-                }
-
-                in = connection.getInputStream();
-                //publishProgress(DownloadCallback.Progress.GET_INPUT_STREAM_SUCCESS, 0);
-
-                parseBARTStations parseBART = new parseBARTStations();
-                return parseBART.parse(in);
-            } finally {
-                // Close Stream and disconnect HTTPS connection.
-                if (in != null) {
-                    in.close();
-                }
-                if (connection != null) {
-                    connection.disconnect();
-                }
-            }
-        }
-
-        private boolean testIsConnected() {
-            ConnectivityManager connectivityManager = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-            return networkInfo != null && networkInfo.isConnected();
-        }
-
-        private ArrayList<parseBARTStations.Station> generateLocalStationList() {
-            ArrayList<parseBARTStations.Station> stations = new ArrayList<>();
-
-            for (String s: getResources().getStringArray(R.array.bart_stations)) {
-                stations.add(new parseBARTStations.Station(s, "", 0.0, 0.0));
-            }
-
-            return stations;
-        }
     }
 }

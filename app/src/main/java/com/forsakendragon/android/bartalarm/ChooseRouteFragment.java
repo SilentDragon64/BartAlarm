@@ -1,6 +1,5 @@
 package com.forsakendragon.android.bartalarm;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -12,30 +11,35 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckedTextView;
 import android.widget.Toast;
 
+import com.forsakendragon.android.bartalarm.XML.downloadXML;
 import com.forsakendragon.android.bartalarm.XML.parseBARTStations;
+import com.forsakendragon.android.bartalarm.XML.parseScheduleBetweenStations;
 
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
-
 
 public class ChooseRouteFragment extends Fragment {
     private AppCompatSpinner mFromStationSpinner;
     private AppCompatSpinner mToStationSpinner;
     private Button mChooseRoute;
     private Button mCancelAlarm;
-    private Button mTestXMLDownload;
+    private Button mDownloadSchedualXML;
+    private CheckedTextView mTripList;
     private SimpleAlarm mAlarm = new SimpleAlarm();
 
     private ArrayList<ArrayList<Integer>> mTimes;
     private ArrayList<parseBARTStations.Station> mStationList;
+    private ArrayList<parseScheduleBetweenStations.Schedule> mScheduleList;
+    private downloadScheduleXMLFile mDownloadScheduleXMLFile;
+    private int mFromStationID;
+    private int mToStationID;
+    private boolean mIsConnected;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -52,6 +56,7 @@ public class ChooseRouteFragment extends Fragment {
         if (args != null) {
             Log.d(Config.LOG_TAG, "ChooseRouteFragment.onCreateView recieved stations:");
             mStationList = (ArrayList<parseBARTStations.Station>) args.getSerializable(Config.ARGS_STATION_LIST);
+            mIsConnected = args.getBoolean(Config.ARGS_IS_CONNECTED);
             parseBARTStations.printStationList(mStationList);
         }
 
@@ -72,6 +77,7 @@ public class ChooseRouteFragment extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(Config.LOG_TAG, parent.getItemAtPosition(position).toString() + " selected as From station, Position: " + position);
+                mFromStationID = position;
             }
 
             @Override
@@ -86,6 +92,7 @@ public class ChooseRouteFragment extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(Config.LOG_TAG, parent.getItemAtPosition(position).toString() + " selected as To station, Position: " + position);
+                mToStationID = position;
             }
 
             @Override
@@ -116,15 +123,26 @@ public class ChooseRouteFragment extends Fragment {
             }
         });
 
-        mTestXMLDownload = (Button) v.findViewById(R.id.testXMLDownload);
-        mTestXMLDownload.setOnClickListener(new View.OnClickListener() {
+        mDownloadSchedualXML = (Button) v.findViewById(R.id.downloadSchedualXML);
+        mDownloadSchedualXML.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(Config.LOG_TAG, "Do nothing");
 
-
+                Log.d(Config.LOG_TAG, "Downloading Schedual");
+                if (mFromStationID != mToStationID && mIsConnected) {
+                    Log.d(Config.LOG_TAG, "From " + mStationList.get(mFromStationID) + " and To " + mStationList.get(mToStationID) + " stations");
+                    String url = Config.SCHEDUAL_DEPART_COMMAND_1 + mStationList.get(mFromStationID).abbreviation +
+                            Config.SCHEDUAL_DEPART_COMMAND_2 + mStationList.get(mToStationID).abbreviation +
+                            Config.SCHEDUAL_DEPART_COMMAND_3;
+                    mDownloadScheduleXMLFile = new downloadScheduleXMLFile(url);
+                    mDownloadScheduleXMLFile.execute();
+                }
+                else
+                    Log.d(Config.LOG_TAG, "From and To stations are the same or not connected");
             }
         });
+
+        mTripList = (CheckedTextView) v.findViewById(R.id.tripList);
 
         setMatrix();
 
@@ -158,4 +176,22 @@ public class ChooseRouteFragment extends Fragment {
         //Log.d(Config.LOG_TAG, mTimes.toString());
     }
 
+    public class downloadScheduleXMLFile extends downloadXML<parseScheduleBetweenStations.Schedule> {
+        public downloadScheduleXMLFile(String url) {
+            super(url);
+        }
+
+        @Override
+        protected ArrayList<parseScheduleBetweenStations.Schedule> parse(InputStream in) throws IOException, XmlPullParserException {
+            parseScheduleBetweenStations parseSchedule = new parseScheduleBetweenStations();
+            return parseSchedule.parse(in);
+        }
+
+        @Override
+        protected void post(ArrayList<parseScheduleBetweenStations.Schedule> list) {
+            mScheduleList = list;
+            Log.d(Config.LOG_TAG, "downloadScheduleXMLFile.post schedule List: ");
+            parseScheduleBetweenStations.printScheduleList(mScheduleList);
+        }
+    }
 }
