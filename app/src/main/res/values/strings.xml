@@ -3,11 +3,20 @@
     <string name="splash_parsing_stations">Parsing Station List</string>
     <string name="splash_done">Download and parse completed</string>
     <string name="splash_done_local">Not Connected, using local Station List</string>
+    <string name="splash_error">Failed to download Station List, trying again! Attempt: </string>
+    <string name="splash_error_local">Failed to download Station List. Using local version</string>
 
     <string name="app_name">BartAlarm</string>
     <string name="from_station">From Station:</string>
     <string name="to_station">To Station:</string>
     <string name="choose_route_button_text">Choose Route</string>
+    <string name="cancel_alarm">Cancel Alarm</string>
+    <string name="download_schedule">Download Schedule</string>
+    <string name="manually_set_alarm">Set Times Manually</string>
+
+    <string name="departure_time">Departure Time</string>
+    <string name="arrival_time">Arrival Time</string>
+    <string name="set_alarm_times">Set Times</string>
 
     <string-array name="bart_stations">
         <!--<item>"12th St. Oakland City Center"</item>-->

@@ -15,8 +15,12 @@ import android.widget.Toast;
  */
 
 public class SimpleAlarm extends WakefulBroadcastReceiver {
-    private static final String EXTRA_ALARM_MINUTES = "EXTRA_ALARM_MINUTES";
+    private static final String EXTRA_ALARM_SECONDS = "EXTRA_ALARM_SECONDS";
     private static final String EXTRA_ALARM_TYPE = "EXTRA_ALARM_TYPE";
+    private static final String EXTRA_ALARM_TYPE_TOAST = "EXTRA_ALARM_TYPE_TOAST";
+
+    private static final String LOG_HEAD = "SimpleAlarm: ";
+
     // The app's AlarmManager, which provides access to the system alarm services.
     private AlarmManager mAlarmMgr;
     // The pending intent that is triggered when the alarm fires.
@@ -24,32 +28,34 @@ public class SimpleAlarm extends WakefulBroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        Log.d(Config.LOG_TAG, LOG_HEAD + "onReceive()");
         Bundle extras = intent.getExtras();
-        int minutesToAlarmIn = extras.getInt(EXTRA_ALARM_MINUTES);
+        long secondsToAlarmIn = extras.getLong(EXTRA_ALARM_SECONDS);
         String alarmType = extras.getString(EXTRA_ALARM_TYPE);
 
-        Log.d(Config.LOG_TAG, "Alarming after " + minutesToAlarmIn + " minutes");
-        Toast.makeText(context, "Alarm!", Toast.LENGTH_SHORT).show();
+        Log.d(Config.LOG_TAG, LOG_HEAD + "Alarming after " + secondsToAlarmIn + " seconds");
+        Log.d(Config.LOG_TAG, LOG_HEAD + "Alarm type:  " + alarmType);
+        if (alarmType.equals(EXTRA_ALARM_TYPE_TOAST))
+            Toast.makeText(context, "Alarm!", Toast.LENGTH_SHORT).show();
     }
 
-    public void setAlarm(Context context, int minutesToAlarmIn) {
-        Log.d(Config.LOG_TAG, "Alarm in " + minutesToAlarmIn + " minutes");
+    public void setAlarm(Context context, long secondsToAlarmIn) {
+        Log.d(Config.LOG_TAG, LOG_HEAD + "setAlarm() Alarm in " + secondsToAlarmIn + " seconds");
+        if (secondsToAlarmIn <= 0) {
+            Log.e(Config.LOG_TAG, LOG_HEAD + "Alarm not valid, value 0 or less " + secondsToAlarmIn);
+            return;
+        }
 
         mAlarmMgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, SimpleAlarm.class);
         Bundle extras = new Bundle();
-        extras.putInt(EXTRA_ALARM_MINUTES, minutesToAlarmIn);
-        extras.putString(EXTRA_ALARM_TYPE, "test");
+        extras.putLong(EXTRA_ALARM_SECONDS, secondsToAlarmIn);
+        extras.putString(EXTRA_ALARM_TYPE, EXTRA_ALARM_TYPE_TOAST);
         intent.putExtras(extras);
         mAlarmIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 
-//        mAlarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-//                SystemClock.elapsedRealtime() +
-//                        60 * 1000 * minutesToAlarmIn, mAlarmIntent);
-
-        // Changed from minutes to seconds for testing
         mAlarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                SystemClock.elapsedRealtime() + 1000 * minutesToAlarmIn, mAlarmIntent);
+                SystemClock.elapsedRealtime() + 1000 * secondsToAlarmIn, mAlarmIntent);
     }
 
     public void cancelAlarm() {

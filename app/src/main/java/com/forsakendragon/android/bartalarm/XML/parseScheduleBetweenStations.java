@@ -19,37 +19,91 @@ import java.util.ArrayList;
 
 public class parseScheduleBetweenStations {
     private static final String nameSpace = null;
+    private static final String LOG_HEAD = "parseScheduleBetweenStations: ";
+
 
     // This class represents a single entry (post) in the XML feed.
     // It includes the data members: name, abbr, GPS Lat and Long
-    public static class Schedule {
-        public final String originTime;
-        public final String destinationTime;
+    public static class ScheduleTrip {
+        private static final String LOG_HEAD = "parseScheduleBetweenStations.ScheduleTrip: ";
+        public static class Leg {
+            public final String mOrigin;
+            public final String mOriginTime;
+            public final String mOriginDate;
+            public final String mDestination;
+            public final String mDestinationTime;
+            public final String mDestinationDate;
+            public final String mTrainFinalDestination;
 
+            public Leg(String origin, String destination, String originTime, String destinationTime,
+                       String originDate, String destinationDate, String trainFinalDestination) {
+                mOrigin = origin;
+                mDestination = destination;
+                mOriginTime = originTime;
+                mDestinationTime = destinationTime;
+                mOriginDate = originDate;
+                mDestinationDate = destinationDate;
+                mTrainFinalDestination = trainFinalDestination;
+            }
 
-        // TODO: Change back to private after testing splash
-        public Schedule(String originTime, String destinationTime) {
-            this.originTime = originTime;
-            this.destinationTime = destinationTime;
+            // Needed for AppCompatSpinner Arraylist to display station names
+            @Override
+            public String toString() {
+                return mOrigin + "@" + mOriginDate + " " + mOriginTime + " to " + mDestination + "@" +
+                        mDestinationDate + " " + mDestinationTime + " FinalDest: " + mTrainFinalDestination;
+            }
+        }
 
+        public final String mOrigin;
+        public final String mDestination;
+        public final ArrayList<Leg> mList;
+
+        private ScheduleTrip(String origin, String destination, ArrayList<Leg> list) {
+            mOrigin = origin;
+            mDestination = destination;
+            mList = list;
+
+            if (mList == null || mList.size() == 0 || mList.size() > 2) {
+                Log.e(Config.LOG_TAG, LOG_HEAD + "Invalid list of train legs: " + mList);
+            }
         }
 
         // Needed for AppCompatSpinner Arraylist to display station names
         @Override
         public String toString() {
-            return originTime + " " + destinationTime;
+            if (mList.size() == 1)
+                return "Departing: " + mOrigin + " at " + mList.get(0).mOriginTime +
+                        "\nArriving: " + mDestination + " at " + mList.get(0).mDestinationTime;
+            else
+                return "Departing: " + mOrigin + " at " + mList.get(0).mOriginTime +
+                        "\nArriving at Tranfer: " + mList.get(0).mDestination + " at " + mList.get(0).mDestinationTime +
+                        "\nDeparting Transfer: " + mList.get(1).mOrigin + " at " + mList.get(1).mOriginTime +
+                        "\nArriving: " + mDestination + " at " + mList.get(1).mDestinationTime;
         }
     }
 
     // TODO: Testing Method
-    public static void printScheduleList(ArrayList<Schedule> list) {
-        Log.d(Config.LOG_TAG, "Schedule List: ");
-        for (Schedule s: list) {
-            Log.d(Config.LOG_TAG, s.toString());
+    public static void printScheduleList(ArrayList<ScheduleTrip> list) {
+        Log.d(Config.LOG_TAG, LOG_HEAD + "printScheduleList(): ");
+        if (list != null) {
+            for (ScheduleTrip s : list) {
+                Log.d(Config.LOG_TAG, LOG_HEAD + s.toString());
+                if (s.mList != null) {
+                    int i = 1;
+                    for (ScheduleTrip.Leg l : s.mList) {
+                        Log.d(Config.LOG_TAG, LOG_HEAD + "Leg " + i++ + ": " + l.toString());
+                    }
+                }
+                else
+                    Log.d(Config.LOG_TAG, LOG_HEAD + "Empty Schedule Leg List!");
+            }
         }
+        else
+            Log.d(Config.LOG_TAG, LOG_HEAD + "Empty Schedule List!");
     }
 
-    public ArrayList<Schedule> parse(InputStream in) throws XmlPullParserException, IOException {
+    public ArrayList<ScheduleTrip> parse(InputStream in) throws XmlPullParserException, IOException {
+        Log.d(Config.LOG_TAG, LOG_HEAD + "parse(): ");
         XmlPullParser parser = Xml.newPullParser();
         parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
         parser.setInput(in, null);
@@ -57,17 +111,18 @@ public class parseScheduleBetweenStations {
         return readFeed(parser);
     }
 
-    private ArrayList<Schedule> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
-        ArrayList<Schedule> entries = null;
+    private ArrayList<ScheduleTrip> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
+        ArrayList<ScheduleTrip> entries = null;
 
         //Tests for first node being root, if not throws error
         parser.require(XmlPullParser.START_TAG, nameSpace, Config.XML_ENTRY_ROOT);
 
         while (parser.next() != XmlPullParser.END_TAG) {
+            String name = parser.getName();
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
             }
-            String name = parser.getName();
+
             // Starts by looking for the entry tag
             if (name.equals(Config.XML_ENTRY_SCHEDULE)) {
                 entries = readSchedule(parser);
@@ -78,8 +133,8 @@ public class parseScheduleBetweenStations {
         return entries;
     }
 
-    private ArrayList<Schedule> readSchedule(XmlPullParser parser) throws XmlPullParserException, IOException {
-        ArrayList<Schedule> entries = null;
+    private ArrayList<ScheduleTrip> readSchedule(XmlPullParser parser) throws XmlPullParserException, IOException {
+        ArrayList<ScheduleTrip> entries = null;
 
         //Tests for first node being root, if not throws error
         parser.require(XmlPullParser.START_TAG, nameSpace, Config.XML_ENTRY_SCHEDULE);
@@ -100,8 +155,8 @@ public class parseScheduleBetweenStations {
     }
 
 
-    private ArrayList<Schedule> readRequest(XmlPullParser parser) throws XmlPullParserException, IOException {
-        ArrayList<Schedule> entries = new ArrayList<>();
+    private ArrayList<ScheduleTrip> readRequest(XmlPullParser parser) throws XmlPullParserException, IOException {
+        ArrayList<ScheduleTrip> entries = new ArrayList<>();
 
         //Tests for first node being the collection of stations, if not throws error
         parser.require(XmlPullParser.START_TAG, nameSpace, Config.XML_ENTRY_REQUEST);
@@ -124,52 +179,62 @@ public class parseScheduleBetweenStations {
     // Parses the contents of an Station entry. If it encounters a name, abbreviation, latitude, or
     // longitude tag, it hands it off to the readString method for processing. Otherwise, it skips
     // the tag.
-    private Schedule readTripEntry(XmlPullParser parser) throws XmlPullParserException, IOException {
+    private ScheduleTrip readTripEntry(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, nameSpace, Config.XML_ENTRY_TRIP);
-        String name = null;
-        String abbreviation = null;
+        String tag = null;
+        int type;
+        String origin;
+        String destination;
+        String originTime;
+        String destinationTime;
 
-        while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                continue;
-            }
-            String entry = parser.getName();
-            if (entry.equals(Config.XML_ENTRY_NAME)) {
-                name = readString(parser, Config.XML_ENTRY_NAME);
-            } else if (entry.equals(Config.XML_ENTRY_ABBREVIATION)) {
-                abbreviation = readString(parser, Config.XML_ENTRY_ABBREVIATION);
-            } else if (entry.equals(Config.XML_ENTRY_LATITUDE)) {
-                latitude = readString(parser, Config.XML_ENTRY_LATITUDE);
-            } else if (entry.equals(Config.XML_ENTRY_LONGITUDE)) {
-                longitude = readString(parser, Config.XML_ENTRY_LONGITUDE);
-            } else {
-                parseXML.skip(parser);
-            }
+        ArrayList<ScheduleTrip.Leg> scheduleLegs = new ArrayList<>();
+
+        tag = parser.getName();
+        origin = parser.getAttributeValue(null, Config.XML_TAG_ORIGIN);
+        destination = parser.getAttributeValue(null, Config.XML_TAG_DESTINATION);
+
+        parser.next();
+        tag = parser.getName();
+        type = parser.getEventType();
+        if (parser.getName().equals(Config.XML_ENTRY_FARES) && parser.getEventType() == XmlPullParser.START_TAG) {
+            parseXML.skip(parser);
         }
-        return new Schedule(name, abbreviation);
-    }
 
-    // Processes Strings entries in the feed with the value title.
-    private String readString(XmlPullParser parser, String title) throws IOException, XmlPullParserException {
-        parser.require(XmlPullParser.START_TAG, nameSpace, title);
-        String entry = parseXML.readText(parser);
-        parser.require(XmlPullParser.END_TAG, nameSpace, title);
-        return entry;
-    }
+        parser.next();
+        tag = parser.getName();
+        type = parser.getEventType();
+        while (parser.getName().equals(Config.XML_ENTRY_LEG) && parser.getEventType() == XmlPullParser.START_TAG) {
+            String legOrigin = parser.getAttributeValue(null, Config.XML_TAG_ORIGIN);
+            String legDestination = parser.getAttributeValue(null, Config.XML_TAG_DESTINATION);
+            String legOriginTime = parser.getAttributeValue(null, Config.XML_TAG_ORIGIN_TIME);
+            String legDestinationTime = parser.getAttributeValue(null, Config.XML_TAG_DESTINATION_TIME);
+            String legOriginDate = parser.getAttributeValue(null, Config.XML_TAG_ORIGIN_DATE);
+            String legDestinationDate = parser.getAttributeValue(null, Config.XML_TAG_DESTINATION_DATE);
+            String legFinalTrainDestination = parser.getAttributeValue(null, Config.XML_TAG_TRAIN_DESTINATION);
 
-    // Processes compound link tags in the feed.
-//    private String readLink(XmlPullParser parser) throws IOException, XmlPullParserException {
-//        String link = "";
-//        parser.require(XmlPullParser.START_TAG, nameSpace, "link");
-//        String tag = parser.getName();
-//        String relType = parser.getAttributeValue(null, "rel");
-//        if (tag.equals("link")) {
-//            if (relType.equals("alternate")) {
-//                link = parser.getAttributeValue(null, "href");
-//                parser.nextTag();
-//            }
-//        }
-//        parser.require(XmlPullParser.END_TAG, nameSpace, "link");
-//        return link;
-//    }
+            if (legOriginTime == null || legDestinationTime == null || legOriginDate == null || legDestinationDate == null)
+                Log.e(Config.LOG_TAG, LOG_HEAD + "Null Time Found - Origin: " + legOriginDate + " " + legOriginTime +
+                        " Destination: " + legDestinationDate + " " + legDestinationTime);
+
+
+            scheduleLegs.add(new ScheduleTrip.Leg(legOrigin, legDestination, legOriginTime,
+                    legDestinationTime, legOriginDate, legDestinationDate, legFinalTrainDestination));
+
+            parser.next();
+            tag = parser.getName();
+            type = parser.getEventType();
+            parser.require(XmlPullParser.END_TAG, nameSpace, Config.XML_ENTRY_LEG);
+
+            parser.next();
+            tag = parser.getName();
+            type = parser.getEventType();
+        }
+
+
+        tag = parser.getName();
+        type = parser.getEventType();
+        parser.require(XmlPullParser.END_TAG, nameSpace, Config.XML_ENTRY_TRIP);
+        return new ScheduleTrip(origin, destination, scheduleLegs);
+    }
 }

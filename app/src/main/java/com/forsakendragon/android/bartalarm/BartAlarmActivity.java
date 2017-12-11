@@ -12,9 +12,11 @@ import com.forsakendragon.android.bartalarm.XML.parseBARTStations;
 import java.util.ArrayList;
 
 public class BartAlarmActivity extends AppCompatActivity implements SplashFragment.OnFragmentInteractionListener {
+    private static final String LOG_HEAD = "BartAlarmActivity: ";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(Config.LOG_TAG, LOG_HEAD + "onCreate()");
         setContentView(R.layout.activity_bart_alarm);
 
         FragmentManager fm = getSupportFragmentManager();
@@ -37,15 +39,14 @@ public class BartAlarmActivity extends AppCompatActivity implements SplashFragme
     }
 
     @Override
-    public void onFragmentInteraction(ArrayList<parseBARTStations.Station> list, boolean inConnected) {
-        Log.d(Config.LOG_TAG, "BartAlarmActivity.onFragmentInteraction Station List handed back:");
-        parseBARTStations.printStationList(list);
+    public void onFragmentInteraction(ArrayList<parseBARTStations.Station> list, boolean isConnected) {
+        Log.d(Config.LOG_TAG, LOG_HEAD + "onFragmentInteraction() - StationList & isConnected handed back from splash");
 
         // Create fragment and give it an argument specifying the list of stations
         Fragment newFragment = new ChooseRouteFragment();
         Bundle bundle = new Bundle();
         bundle.putSerializable(Config.ARGS_STATION_LIST, list);
-        bundle.putBoolean(Config.ARGS_IS_CONNECTED, inConnected);
+        bundle.putBoolean(Config.ARGS_IS_CONNECTED, isConnected);
         newFragment.setArguments(bundle);
 
         FragmentManager fm = getSupportFragmentManager();
@@ -54,7 +55,8 @@ public class BartAlarmActivity extends AppCompatActivity implements SplashFragme
 // Replace whatever is in the fragment_container view with this fragment,
 // and add the transaction to the back stack so the user can navigate back
         transaction.replace(R.id.fragment_container, newFragment);
-        transaction.addToBackStack(null);
+        //Adds fragment to stack, back button goes to the previous fragment, without app closes
+        //transaction.addToBackStack(null);
 
 // Commit the transaction
         transaction.commit();

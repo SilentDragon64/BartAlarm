@@ -6,7 +6,6 @@ import com.forsakendragon.android.bartalarm.XML.parseBARTStations;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -19,8 +18,6 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
 
@@ -35,6 +32,8 @@ public class SplashFragment extends Fragment {
     private ArrayList<parseBARTStations.Station> mStationList;
     private TextView mSplashStatus;
     private downloadStationXMLFile mDownloadStationXMLFile;
+
+    private static int mAttempts = 1;
 
     public SplashFragment() {
         // Required empty public constructor
@@ -54,16 +53,15 @@ public class SplashFragment extends Fragment {
         mSplashStatus = (TextView) v.findViewById(R.id.splash_status);
         mSplashStatus.setText(R.string.splash_download_stations);
 
-
-        isConnected = testIsConnected();
-        if (isConnected) {
+        if (testIsConnected()) {
             mDownloadStationXMLFile = new downloadStationXMLFile(Config.STATION_LIST_COMMAND);
             mDownloadStationXMLFile.execute();
         } else {
-            // TODO; Set station list locally
-            mStationList.add(new parseBARTStations.Station("name", "abbr", 1.0, 1.0));
             mSplashStatus.setText(R.string.splash_done_local);
-            mListener.onFragmentInteraction(mStationList, isConnected);
+            // TODO; Set station list locally
+            mStationList.add(new parseBARTStations.Station("Name 1", "1", 1.0, 1.0));
+            mStationList.add(new parseBARTStations.Station("Name 2", "2", 1.0, 1.0));
+            mListener.onFragmentInteraction(mStationList, false);
 
 //            private ArrayList<parseBARTStations.Station> generateLocalStationList() {
 //                ArrayList<parseBARTStations.Station> stations = new ArrayList<>();
@@ -139,13 +137,25 @@ public class SplashFragment extends Fragment {
 
         @Override
         protected void post(ArrayList<parseBARTStations.Station> list) {
-            mSplashStatus.setText(R.string.splash_done);
-
             mStationList = list;
             Log.d(Config.LOG_TAG, "downloadStationXMLFile.post Station List: ");
-            parseBARTStations.printStationList(mStationList);
+            if (mStationList != null) {
+                mSplashStatus.setText(R.string.splash_done);
+                mListener.onFragmentInteraction(mStationList, true);
+            } else {
+                Log.d(Config.LOG_TAG, "Null station list recieved!");
+                mSplashStatus.setText(R.string.splash_error + mAttempts++);
+                if (mAttempts <= 3) {
+                    mDownloadStationXMLFile = new downloadStationXMLFile(Config.STATION_LIST_COMMAND);
+                    mDownloadStationXMLFile.execute();
+                } else {
+                    mSplashStatus.setText(R.string.splash_error_local);
+                    // TODO; Set station list locally
+                    mStationList.add(new parseBARTStations.Station("Error", "err", 1.0, 1.0));
+                    mListener.onFragmentInteraction(mStationList, false);
+                }
 
-            mListener.onFragmentInteraction(mStationList, true);
+            }
         }
 
     }

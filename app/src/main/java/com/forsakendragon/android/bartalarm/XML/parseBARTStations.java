@@ -19,6 +19,7 @@ import java.util.List;
 
 public class parseBARTStations {
     private static final String nameSpace = null;
+    private static final String LOG_HEAD = "parseBARTStations: ";
 
     // This class represents a single entry (post) in the XML feed.
     // It includes the data members: name, abbr, GPS Lat and Long
@@ -45,10 +46,15 @@ public class parseBARTStations {
 
     // TODO: Testing Method
     public static void printStationList(ArrayList<Station> list) {
-        Log.d(Config.LOG_TAG, "Station List: ");
-        for (Station s: list) {
-            Log.d(Config.LOG_TAG, s.name + " " + s.abbreviation + " " + s.latitude + " " + s.latitude);
+        Log.d(Config.LOG_TAG, LOG_HEAD + "Station List: ");
+
+        if (list != null) {
+            for (Station s: list) {
+                Log.d(Config.LOG_TAG, LOG_HEAD + s.name + " " + s.abbreviation + " " + s.latitude + " " + s.latitude);
+            }
         }
+        else
+            Log.d(Config.LOG_TAG, LOG_HEAD + "Empty Station List!");
     }
 
     public ArrayList<Station> parse(InputStream in) throws XmlPullParserException, IOException {

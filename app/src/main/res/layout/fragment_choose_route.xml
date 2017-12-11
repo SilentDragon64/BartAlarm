@@ -6,13 +6,15 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical"
-              tools:context="com.forsakendragon.android.bartalarm.ChooseRouteFragment">
+              android:visibility="visible"
+              tools:context="com.forsakendragon.android.bartalarm.ChooseRouteFragment"
+              android:weightSum="1">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/from_station"
-        android:layout_margin="15dp" />
+        android:layout_margin="15dp"
+        android:text="@string/from_station"/>
 
     <android.support.v7.widget.AppCompatSpinner
         android:id="@+id/fromStation"
@@ -24,46 +26,67 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/to_station"
-        android:layout_margin="15dp" />
+        android:layout_margin="15dp"
+        android:text="@string/to_station"/>
 
     <android.support.v7.widget.AppCompatSpinner
         android:id="@+id/toStation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"/>
-    <!--android:entries="@array/bart_stations"-->
 
-    <Button
-        android:id="@+id/chooseRouteButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="@string/choose_route_button_text"/>
 
-    <Button
-        android:id="@+id/cancelAlarm"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="Cancel Alarm"/>
-
-    <Button
-        android:id="@+id/downloadSchedualXML"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="Download XML"/>
-
-    <CheckedTextView
-        android:id="@+id/tripList"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:checkMark="@android:drawable/checkbox_on_background"
-        android:checked="false"
-        android:clickable="true"
-        android:contextClickable="true"
-        android:gravity="center"
-        />
+        android:layout_gravity="center_vertical"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/downloadSchedualXML"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="@string/download_schedule"/>
+
+        <Button
+            android:id="@+id/manuallySetAlarm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="@string/manually_set_alarm"/>
+
+    </LinearLayout>
+
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/scheduleList"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_gravity="fill_vertical"
+        android:layout_weight="0.21"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/chooseRouteButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/choose_route_button_text"/>
+
+        <Button
+            android:id="@+id/cancelAlarm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/cancel_alarm"/>
+
+    </LinearLayout>
 
 </LinearLayout>
